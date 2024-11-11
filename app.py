@@ -1,13 +1,15 @@
-import re
 import streamlit as st
 import torch
 import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
+from nltk.tokenize import word_tokenize
+import re
 import torch.nn as nn
 import torch.nn.functional as F
 import time
+
 
 # Define your model class
 class NN(nn.Module):
@@ -43,20 +45,40 @@ model_path = "model.pth"
 model.load_state_dict(torch.load(model_path))
 model.eval()
 
+# Load the state dictionary into the model
+model_path = "model.pth"  # Adjust this if needed
+model.load_state_dict(torch.load(model_path))
+model.eval()
+
 # Load the fitted vectorizer
 with open("vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
 
 
-# Preprocess the input text with regex-based tokenization
+# Preprocess the input text
 def preprocess_text(text):
     text = text.lower()
-    tokens = re.findall(r'\b\w+\b', text)  # Simple regex to find words
+    tokens = word_tokenize(text)
+    tokens = [re.sub(r"[^a-zA-Z0-9]", "", token) for token in tokens if token]
     stop_words = set(stopwords.words("english"))
     tokens = [token for token in tokens if token not in stop_words]
     stemmer = PorterStemmer()
     tokens = [stemmer.stem(token) for token in tokens]
     return " ".join(tokens)
+
+
+# Predict the sentiment of the input text
+def predict_text_label(text):
+    processed_text = preprocess_text(text)
+    vectorized_text = vectorizer.transform([processed_text]).toarray()
+    input_tensor = torch.tensor(vectorized_text, dtype=torch.float32)
+
+    with torch.no_grad():
+        scores = model(input_tensor)
+        _, predicted_label = scores.max(1)
+
+    label_map = {0: "Negative", 1: "Positive"}
+    return label_map[predicted_label.item()]
 
 
 # Apply CSS for a dark theme with white text and color key
@@ -144,6 +166,7 @@ if "user_text" not in st.session_state:
 user_input = st.text_area("Enter your text here:", value=st.session_state["user_text"])
 if user_input != st.session_state["user_text"]:
     st.session_state["user_text"] = user_input
+    st.experimental_rerun()
 
 # Process input dynamically
 if user_input:
