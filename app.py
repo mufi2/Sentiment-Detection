@@ -45,11 +45,6 @@ model_path = "model.pth"
 model.load_state_dict(torch.load(model_path))
 model.eval()
 
-# Load the state dictionary into the model
-model_path = "model.pth"  # Adjust this if needed
-model.load_state_dict(torch.load(model_path))
-model.eval()
-
 # Load the fitted vectorizer
 with open("vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
@@ -166,7 +161,6 @@ if "user_text" not in st.session_state:
 user_input = st.text_area("Enter your text here:", value=st.session_state["user_text"])
 if user_input != st.session_state["user_text"]:
     st.session_state["user_text"] = user_input
-    st.experimental_rerun()
 
 # Process input dynamically
 if user_input:
