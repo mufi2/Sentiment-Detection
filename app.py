@@ -2,14 +2,17 @@ import streamlit as st
 import torch
 import pickle
 from sklearn.feature_extraction.text import CountVectorizer
+import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 import re
 import torch.nn as nn
 import torch.nn.functional as F
-import time
 
+# Download NLTK data files
+nltk.download('punkt')
+nltk.download('stopwords')
 
 # Define your model class
 class NN(nn.Module):
@@ -34,7 +37,6 @@ class NN(nn.Module):
         x = self.fc4(x)
         return x
 
-
 # Initialize model with input size and number of classes
 input_size = 4073  # Adjust based on your vectorizer
 num_classes = 2
@@ -42,18 +44,12 @@ model = NN(input_size=input_size, num_classes=num_classes)
 
 # Load the state dictionary
 model_path = "model.pth"
-model.load_state_dict(torch.load(model_path))
-model.eval()
-
-# Load the state dictionary into the model
-model_path = "model.pth"  # Adjust this if needed
-model.load_state_dict(torch.load(model_path))
+model.load_state_dict(torch.load(model_path, weights_only=True))
 model.eval()
 
 # Load the fitted vectorizer
 with open("vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
-
 
 # Preprocess the input text
 def preprocess_text(text):
@@ -65,7 +61,6 @@ def preprocess_text(text):
     stemmer = PorterStemmer()
     tokens = [stemmer.stem(token) for token in tokens]
     return " ".join(tokens)
-
 
 # Predict the sentiment of the input text
 def predict_text_label(text):
@@ -79,7 +74,6 @@ def predict_text_label(text):
 
     label_map = {0: "Negative", 1: "Positive"}
     return label_map[predicted_label.item()]
-
 
 # Apply CSS for a dark theme with white text and color key
 st.markdown(
@@ -158,15 +152,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Text input for user with automatic rerun upon changes
-if "user_text" not in st.session_state:
-    st.session_state["user_text"] = ""
-
-# Update user input state
-user_input = st.text_area("Enter your text here:", value=st.session_state["user_text"])
-if user_input != st.session_state["user_text"]:
-    st.session_state["user_text"] = user_input
-    st.experimental_rerun()
+# Text input for user
+user_input = st.text_area("Enter your text here:")
 
 # Process input dynamically
 if user_input:
@@ -174,7 +161,8 @@ if user_input:
     sentences = user_input.split(".")
     highlighted_text = ""
     for sentence in sentences:
-        if sentence.strip():  # Only process non-empty sentences
+        sentence = sentence.strip()
+        if sentence:  # Only process non-empty sentences
             prediction = predict_text_label(sentence)
             # Apply different styles based on sentiment
             if prediction == "Positive":
@@ -186,3 +174,4 @@ if user_input:
                     f'<span class="highlight-negative">{sentence}.</span> '
                 )
     st.markdown(highlighted_text, unsafe_allow_html=True)
+
