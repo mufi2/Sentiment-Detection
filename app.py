@@ -1,19 +1,13 @@
+import re
 import streamlit as st
 import torch
 import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize
-import re
 import torch.nn as nn
 import torch.nn.functional as F
 import time
-import nltk
-
-# Download required NLTK data
-nltk.download('punkt')
-nltk.download('stopwords')
 
 # Define your model class
 class NN(nn.Module):
@@ -54,30 +48,15 @@ with open("vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
 
 
-# Preprocess the input text
+# Preprocess the input text with regex-based tokenization
 def preprocess_text(text):
     text = text.lower()
-    tokens = word_tokenize(text)
-    tokens = [re.sub(r"[^a-zA-Z0-9]", "", token) for token in tokens if token]
+    tokens = re.findall(r'\b\w+\b', text)  # Simple regex to find words
     stop_words = set(stopwords.words("english"))
     tokens = [token for token in tokens if token not in stop_words]
     stemmer = PorterStemmer()
     tokens = [stemmer.stem(token) for token in tokens]
     return " ".join(tokens)
-
-
-# Predict the sentiment of the input text
-def predict_text_label(text):
-    processed_text = preprocess_text(text)
-    vectorized_text = vectorizer.transform([processed_text]).toarray()
-    input_tensor = torch.tensor(vectorized_text, dtype=torch.float32)
-
-    with torch.no_grad():
-        scores = model(input_tensor)
-        _, predicted_label = scores.max(1)
-
-    label_map = {0: "Negative", 1: "Positive"}
-    return label_map[predicted_label.item()]
 
 
 # Apply CSS for a dark theme with white text and color key
