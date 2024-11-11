@@ -4,14 +4,12 @@ import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize
-import nltk
 import re
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Ensure Punkt tokenizer is downloaded
-nltk.download("punkt")
+# Ensure stopwords are downloaded
+import nltk
 nltk.download("stopwords")
 
 
@@ -57,8 +55,7 @@ with open("vectorizer.pkl", "rb") as f:
 # Preprocess the input text
 def preprocess_text(text):
     text = text.lower()
-    tokens = word_tokenize(text)
-    tokens = [re.sub(r"[^a-zA-Z0-9]", "", token) for token in tokens if token]
+    tokens = re.findall(r'\b\w+\b', text)  # Tokenize using regex
     stop_words = set(stopwords.words("english"))
     tokens = [token for token in tokens if token not in stop_words]
     stemmer = PorterStemmer()
@@ -176,4 +173,5 @@ if user_input:
                     f'<span class="highlight-negative">{sentence}.</span> '
                 )
     st.markdown(highlighted_text, unsafe_allow_html=True)
+
 
