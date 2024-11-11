@@ -9,7 +9,11 @@ import re
 import torch.nn as nn
 import torch.nn.functional as F
 import time
+import nltk
 
+# Download required NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
 
 # Define your model class
 class NN(nn.Module):
